@@ -16,7 +16,15 @@
  */
 
 #include <inttypes.h>
+
+
+#include <nRF24L01.h>
+#include <RF24_config.h>
+#include <RF24.h>
+
+
 #define COM_24G_VERSION 0.1;
+#define PACK __attribute__((packed))  // Important declaration to make sure cross-platform compilation of structure are equivalent
 
 // PayloadType: Enumeration of Payload Type to be managed
 enum PayloadType {
@@ -47,8 +55,8 @@ typedef uint16_t vn_payload_CRC;    // 16bits CRC for the payload, Not Used as N
 
 //SENSOR_HT
 typedef struct {
-  float     humidity;       // Percentage of humidity
-  flot		temperature;	// Temperature in degree centigrade	
+  float   humidity;       // Percentage of humidity
+  float	  temperature;	// Temperature in degree centigrade	
   uint8_t   status;
 }
 PACK sensor_ht_t;
@@ -102,9 +110,9 @@ PACK sensor_detect_t;
 
 // SENSOR_OPEN
 typedef struct {
-  uint8_t   open_close;			// Opening/closing
-  uint8_t	windows_door		// Windows/ External Door / Internal Door
-  uint8_t    status;
+  uint8_t  open_close;			// Opening/closing
+  uint8_t  windows_door;		// Windows/ External Door / Internal Door
+  uint8_t  status;
 }
 PACK sensor_open_t;
 
@@ -128,11 +136,11 @@ PACK cmd_who_t;
 // CMD_HVAC
 typedef struct {
   uint8_t   temperature;		// Temperature in degree centigrade
-  uint8_t	fan					// fan setup
-  uint8_t	swing				// swing setup
-  uint8_t	mode				// mode
-  bit		power_switch		// Switch power or not
-  bit		is_on				// to know whether the HVAC is ON or OFF
+  uint8_t	fan;					// fan setup
+  uint8_t	swing;				// swing setup
+  uint8_t	mode;				// mode
+  bool		power_switch;		// Switch power or not
+  bool		is_on;				// to know whether the HVAC is ON or OFF
   uint8_t    status;
 }
 PACK cmd_hvac_t;
@@ -146,7 +154,7 @@ PACK cmd_hvac_t;
 
  union COM_24g_data{
 	sensor_ht_t			SENSOR_HT;
-	ssensor_dust_t		SENSOR_DUST;
+	sensor_dust_t		SENSOR_DUST;
 	sensor_pressure_t	SENSOR_PRESSURE;
 	sensor_light_t		SENSOR_LIGHT;
 	sensor_sound_t		SENSOR_SOUND;
@@ -156,27 +164,14 @@ PACK cmd_hvac_t;
 	cmd_what_t			CMD_WHAT;
 	cmd_who_t			CMD_WHO;
 	cmd_hvac_t			CMD_HVAC;
-  }
+  } PACK;
 
 
 // Payload Structure
 struct Payload {
   vn_payload_type      type;
   vn_payload_version   version;
-  union {
-	sensor_ht_t			SENSOR_HT;
-	ssensor_dust_t		SENSOR_DUST;
-	sensor_pressure_t	SENSOR_PRESSURE;
-	sensor_light_t		SENSOR_LIGHT;
-	sensor_sound_t		SENSOR_SOUND;
-	sensor_uv_t			SENSOR_UV;
-	sensor_detect_t		SENSOR_DETECT;
-	sensor_open_t		SENSOR_OPEN;
-	cmd_what_t			CMD_WHAT;
-	cmd_who_t			CMD_WHO;
-	cmd_hvac_t			CMD_HVAC;
-  }
-  PACK data;
+  union COM_24g_data data;
 #ifdef CRC_PAYLOAD
   vn_payload_CRC payloadCRC;
 #endif
@@ -191,11 +186,11 @@ class COM_24g
 {
   public:
   //interface element for connexion
-  int _miso	= 50;		// uno d12 (pin 18) or mega d50
-  int _mosi	= 51;		// uno d11 (pin 17) or mega d51
-  int _sck	= 52;		// uno d13 (pin 19) or mega d52
-  int _csn	= 48;		// uno d10 (pin 16) or mega d48
-  int _ce	= 15;		// uno d9  (pin 15) or mega d49
+  int _miso	;		// uno d12 (pin 18) or mega d50 or nano 
+  int _mosi	;		// uno d11 (pin 17) or mega d51 or nano
+  int _sck	;		// uno d13 (pin 19) or mega d52 or nano
+  int _csn	;		// uno d10 (pin 16) or mega d48 or nano
+  int _ce	;		// uno d9  (pin 15) or mega d49 or nano
   
   //PipeTable
   uint64_t _readingPipe[4];  // Table Pipe Adress to be listen (like 0xF0F0F0F0E1LL)
@@ -206,13 +201,13 @@ class COM_24g
   uint8_t  	_channel;
   
   //Payload to send or received
-  Payload 			_payload;
+  Payload 		_payload;
   vn_payload_CRC 	_crc;
   vn_payload_CRC 	_key;
 
  
   // Data treceived or to be sent
-  PayloadType 			_dataType;
+  PayloadType 		_dataType;
   vn_payload_version	_dataVersion;
   union COM_24g_data 	_data;
 
@@ -220,6 +215,7 @@ class COM_24g
   bool 		sendFrame();				// Send a frame through the 2.4GHz
   uint8_t  	isAvailable();				// Return one pipe where a data is available for reading 
   void 		receiveFrame(uint8_t pipe);	// Decode the available frame on the pipe
+  void 		listeningPipe();			// Listen all available pipes
 
 }
 
