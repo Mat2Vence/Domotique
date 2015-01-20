@@ -18,9 +18,9 @@
 #include <inttypes.h>
 
 
-#include <nRF24L01.h>
-#include <RF24_config.h>
-#include <RF24.h>
+#include "nRF24L01.h"
+#include "RF24_config.h"
+#include "RF24.h"
 
 
 #define COM_24G_VERSION 0.1;
@@ -199,6 +199,7 @@ class COM_24g
   //Communication object from the RF24 library
   RF24 		_radioCom;
   uint8_t  	_channel;
+  uint8_t       _maxRetry; //number of retry in case of a failure in transmission --> max is 15
   
   //Payload to send or received
   Payload 		_payload;
@@ -211,11 +212,11 @@ class COM_24g
   vn_payload_version	_dataVersion;
   union COM_24g_data 	_data;
 
-  bool 		initiate();					// Setup the communication
+  bool 		initiate();				// Setup the communication
   bool 		sendFrame();				// Send a frame through the 2.4GHz
   uint8_t  	isAvailable();				// Return one pipe where a data is available for reading 
-  void 		receiveFrame(uint8_t pipe);	// Decode the available frame on the pipe
+  void 		receiveFrame();	                        // Decode the available frame on the pipe
   void 		listeningPipe();			// Listen all available pipes
 
-}
+};
 

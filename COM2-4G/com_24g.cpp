@@ -16,7 +16,7 @@
  */
 
  
- 
+#include <arduin.h> 
 #include <SPI.h>
 #include "RF24.h"
 #include "printf.h"
@@ -27,12 +27,13 @@
 bool COM_24g::initiate()
 {
     bool status = false;
+    int i;
 	RF24 _radioCom(_ce,_csn);
 	_radioCom.begin();
 	// optionally, increase the delay between retries & # of retries
-	_radioCom.setRetries(15,15);
+	_radioCom.setRetries(15,_maxRetry);
 	
-	_radioCom.setChannel= _channel
+	_radioCom.setChannel(_channel);
 
 	// optionally, reduce the payload size.  seems to improve reliability
 	//_radioCom.setPayloadSize(8);
@@ -41,7 +42,7 @@ bool COM_24g::initiate()
 	_radioCom.openWritingPipe(_writingPipe);
 	for (i=1;i<5;i++) {
 		if (_readingPipe[i] != NULL) {
-		_radioCom.openReadingPipe(i,pipes[i]);
+		_radioCom.openReadingPipe(i,_readingPipe[i]);
 		status = true;
 		}
 	}
@@ -64,9 +65,11 @@ bool COM_24g::sendFrame()
 	_radioCom.openWritingPipe(_writingPipe);
 	
 	//put in place the Paypload
-	_payload = 
+	_payload.type    = _dataType;
+	_payload.version = _dataVersion;
+	_payload.data    = _data;
 
-	bool status = radio.write(&_payload, sizeof(_payload));
+	bool status = _radioCom.write(&_payload, sizeof(_payload));
 
 	//back in read mode
 	_radioCom.startListening(); 
@@ -77,10 +80,12 @@ bool COM_24g::sendFrame()
   
 uint8_t COM_24g::isAvailable()
 {
+  uint8_t i;
+  uint8_t pipeAvailable;
 	if (_radioCom.available()) {
 		for (i=1;i<5;i++) {
-			if (_radioCom.available(i)) {
-			uint8_t pipeAvailable = i;
+			if (_radioCom.available(&i)) {
+			pipeAvailable = i;
 			break;
 			}
 		}
@@ -93,45 +98,48 @@ uint8_t COM_24g::isAvailable()
 }
 
 
-void COM_24g::listeningPipe();	//Listen all available pipes
+void COM_24g::listeningPipe()	//Listen all available pipes
 {
-  _radioCom.openReadingPipe(pipe, _readingPipe[pipe]);
+  int i;
+	for (i=1;i<5;i++) {
+		if (_readingPipe[i] != NULL) {
+		_radioCom.openReadingPipe(i,_readingPipe[i]);
+		}
+	}
   _radioCom.startListening();
   _radioCom.powerUp();
   printf("//NRF24 Module Sensor Enabled.\n");
 
 }
 
-void COM_24g::receiveFrame(uint8_t pipe);	// Decode the available frame on the pipe
+void COM_24g::receiveFrame()	// Decode the available frame on the pipe
 {
 
-Payload payload = (Payload) {
-  CMD_WHO
-};
+int   len 	= _radioCom.getDynamicPayloadSize();  	// Size of the payload to read
+bool  done 	= _radioCom.read(&_payload, len);        // Read the payload
 
-len 	= _radioCom.getDynamicPayloadSize();  	// Size of the payload to read
-done 	= _radioCom.read(payload, len);			// Read the payload
-//printf("%u:%u:%u\n", done, pipeNo, len);
+if(done){
+//_dataType        = _payload.type;
+_dataVersion     = _payload.version;
 
-  switch (payload.type) {
-      case CMD_WHO:
-        printf("CMD_WHO:");
-		_radioCom.COM_24g_data.partnum	= payload.data.partnum;			// part number
-		_radioCom.COM_24g_data.parttype	= payload.data.parttype;		// type of part
-		_radioCom.COM_24g_data.revision	= payload.data.revision;		// Revision number
-		_radioCom.COM_24g_data.status	= payload.data.status;
-		
-		uint16_t   partnum		= payload.data.partnum;				// part number
-		uint16_t   parttype		= payload.data.parttype;			// type of part
-		uint16_t   revision		= payload.data.revision;			// Revision number
-		uint8_t    status		= payload.data.status;
-        printf("Part number %d of type %d - version of code is %d \n", partnum,parttype,revision);
-        lastReceive = millis();
-        break;
-      default:
-        printf("Unknown message.\n");
-        break;
-    }
+  switch (_payload.type ) {
+    case CMD_WHO:
+    _data.CMD_WHO.partnum   = _payload.data.CMD_WHO.partnum;
+    _data.CMD_WHO.revision  = _payload.data.CMD_WHO.revision;
+    _data.CMD_WHO.parttype  = _payload.data.CMD_WHO.parttype;
+    
+    break;
+    
+    default:
+        //serial.println("Unknown message.");
+    break;
+    
+  }
+
+} else {
+ //serial.println("Error of read on the Paypload"); 
+}
+
 
 }
 
@@ -142,4 +150,3 @@ done 	= _radioCom.read(payload, len);			// Read the payload
 
 
 
-}

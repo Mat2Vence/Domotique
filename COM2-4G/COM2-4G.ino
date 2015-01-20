@@ -22,18 +22,16 @@
 void setup(void)
 {
 
-  Serial.begin(57600);
-  printf_begin();
-
-  printf("\nPreparing NRF24L01 interface\n");
+  Serial.begin(9600);
+  Serial.println("Preparing NRF24L01 interface");
  
 }
-//
-// Loop
-//
 
 
 void loop(void)
 {
-  
+  while(1) {
+    
+    
+  }
 }
