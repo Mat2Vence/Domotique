@@ -189,15 +189,15 @@ class COM_24g
   int _miso	;		// uno d12 (pin 18) or mega d50 or nano 
   int _mosi	;		// uno d11 (pin 17) or mega d51 or nano
   int _sck	;		// uno d13 (pin 19) or mega d52 or nano
-  int _csn	;		// uno d10 (pin 16) or mega d48 or nano
-  int _ce	;		// uno d9  (pin 15) or mega d49 or nano
+  uint8_t _csn	;		// uno d10 (pin 16) or mega d48 or nano
+  uint8_t _ce	;		// uno d9  (pin 15) or mega d49 or nano
   
   //PipeTable
   uint64_t _readingPipe[4];  // Table Pipe Adress to be listen (like 0xF0F0F0F0E1LL)
   uint64_t _writingPipe;  // Pipe Adress to write (like 0xF0F0F0F0E1LL)
    
   //Communication object from the RF24 library
-  RF24 		_radioCom;
+  //RF24 		_radioCom; // Pass as a variable in the rest of the livrary because of init issue when class object is created
   uint8_t  	_channel;
   uint8_t       _maxRetry; //number of retry in case of a failure in transmission --> max is 15
   
@@ -212,11 +212,14 @@ class COM_24g
   vn_payload_version	_dataVersion;
   union COM_24g_data 	_data;
 
-  bool 		initiate();				// Setup the communication
-  bool 		sendFrame();				// Send a frame through the 2.4GHz
-  uint8_t  	isAvailable();				// Return one pipe where a data is available for reading 
-  void 		receiveFrame();	                        // Decode the available frame on the pipe
-  void 		listeningPipe();			// Listen all available pipes
+   		COM_24g(RF24 radioCom);    	                        // Object creation
+  bool 		initiate(RF24 _radioCom);				// Setup the communication
+  bool 		sendFrame(RF24 _radioCom);				// Send a frame through the 2.4GHz
+  uint8_t  	isAvailable(RF24 _radioCom);				// Return one pipe where a data is available for reading 
+  void 		receiveFrame(RF24 _radioCom);	                        // Decode the available frame on the pipe
+  void 		listeningPipe(RF24 _radioCom);			        // Listen all available pipes
+ 
+  void          statusReportOnPC(RF24 _radioCom);                       // Use in debug in order to make sure everything is set correctly.
 
 };
 

@@ -22,13 +22,20 @@
 #include "printf.h"
 #include "com_24g.h"
 
+COM_24g::COM_24g(RF24 _radioCom)
+{
+  _miso	=50;		// uno d12 (pin 18) or mega d50 or nano 
+  _mosi	=51;		// uno d11 (pin 17) or mega d51 or nano
+  _sck	=52;		// uno d13 (pin 19) or mega d52 or nano
+  _csn	=48;		// uno d10 (pin 16) or mega d48 or nano
+  _ce	=49;		// uno d9  (pin 15) or mega d49 or nano
+}
 
-
-bool COM_24g::initiate()
+bool COM_24g::initiate(RF24 _radioCom)
 {
     bool status = false;
     int i;
-	RF24 _radioCom(_ce,_csn);
+	//RF24 _radioCom(_ce,_csn);
 	_radioCom.begin();
 	// optionally, increase the delay between retries & # of retries
 	_radioCom.setRetries(15,_maxRetry);
@@ -56,7 +63,7 @@ return status;
 
 
  
-bool COM_24g::sendFrame()
+bool COM_24g::sendFrame(RF24 _radioCom)
 {
 	// First, stop listening so we can talk
 	_radioCom.stopListening(); 
@@ -78,7 +85,7 @@ bool COM_24g::sendFrame()
 }
 
   
-uint8_t COM_24g::isAvailable()
+uint8_t COM_24g::isAvailable(RF24 _radioCom)
 {
   uint8_t i;
   uint8_t pipeAvailable;
@@ -98,7 +105,7 @@ uint8_t COM_24g::isAvailable()
 }
 
 
-void COM_24g::listeningPipe()	//Listen all available pipes
+void COM_24g::listeningPipe(RF24 _radioCom)	//Listen all available pipes
 {
   int i;
 	for (i=1;i<5;i++) {
@@ -112,7 +119,7 @@ void COM_24g::listeningPipe()	//Listen all available pipes
 
 }
 
-void COM_24g::receiveFrame()	// Decode the available frame on the pipe
+void COM_24g::receiveFrame(RF24 _radioCom)	// Decode the available frame on the pipe
 {
 
 int   len 	= _radioCom.getDynamicPayloadSize();  	// Size of the payload to read
@@ -143,7 +150,11 @@ _dataVersion     = _payload.version;
 
 }
 
+void COM_24g::statusReportOnPC(RF24 _radioCom)	// Decode the available frame on the pipe
+{
+_radioCom.printDetails();
 
+}
 
 
 
