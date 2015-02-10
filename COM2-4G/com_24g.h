@@ -186,11 +186,11 @@ class COM_24g
 {
   public:
   //interface element for connexion
-  int _miso	;		// uno d12 (pin 18) or mega d50 or nano 
-  int _mosi	;		// uno d11 (pin 17) or mega d51 or nano
-  int _sck	;		// uno d13 (pin 19) or mega d52 or nano
-  uint8_t _csn	;		// uno d10 (pin 16) or mega d48 or nano
-  uint8_t _ce	;		// uno d9  (pin 15) or mega d49 or nano
+  int _miso	;		// uno d12 (pin 18) or mega d50 (pin 22)or nano 
+  int _mosi	;		// uno d11 (pin 17) or mega d51 (pin 21)or nano
+  int _sck	;		// uno d13 (pin 19) or mega d52 (pin 20)or nano
+  uint8_t _csn	;		// uno d10 (pin 16) or mega d48 (pin 36)or nano
+  uint8_t _ce	;		// uno d9  (pin 15) or mega d49 (pin 35)or nano
   
   //PipeTable
   uint64_t _readingPipe[4];  // Table Pipe Adress to be listen (like 0xF0F0F0F0E1LL)
@@ -216,7 +216,7 @@ class COM_24g
   bool 		initiate(RF24 _radioCom);				// Setup the communication
   bool 		sendFrame(RF24 _radioCom);				// Send a frame through the 2.4GHz
   uint8_t  	isAvailable(RF24 _radioCom);				// Return one pipe where a data is available for reading 
-  void 		receiveFrame(RF24 _radioCom);	                        // Decode the available frame on the pipe
+  bool 		receiveFrame(RF24 _radioCom);	                        // Decode the available frame on the pipe
   void 		listeningPipe(RF24 _radioCom);			        // Listen all available pipes
  
   void          statusReportOnPC(RF24 _radioCom);                       // Use in debug in order to make sure everything is set correctly.

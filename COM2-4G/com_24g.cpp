@@ -19,16 +19,15 @@
 #include <arduin.h> 
 #include <SPI.h>
 #include "RF24.h"
-#include "printf.h"
 #include "com_24g.h"
 
 COM_24g::COM_24g(RF24 _radioCom)
 {
-  _miso	=50;		// uno d12 (pin 18) or mega d50 or nano 
-  _mosi	=51;		// uno d11 (pin 17) or mega d51 or nano
-  _sck	=52;		// uno d13 (pin 19) or mega d52 or nano
-  _csn	=48;		// uno d10 (pin 16) or mega d48 or nano
-  _ce	=49;		// uno d9  (pin 15) or mega d49 or nano
+  _miso	=50;		// uno d12 (pin 18) or mega d50 or nano 12
+  _mosi	=51;		// uno d11 (pin 17) or mega d51 or nano 11
+  _sck	=52;		// uno d13 (pin 19) or mega d52 or nano 13
+  _csn	=48;		// uno d10 (pin 16) or mega d48 or nano 10
+  _ce	=49;		// uno d9  (pin 15) or mega d49 or nano 9
 }
 
 bool COM_24g::initiate(RF24 _radioCom)
@@ -50,12 +49,18 @@ bool COM_24g::initiate(RF24 _radioCom)
 	for (i=1;i<5;i++) {
 		if (_readingPipe[i] != NULL) {
 		_radioCom.openReadingPipe(i,_readingPipe[i]);
+        printf("Now listening pipe");
+
 		status = true;
 		}
 	}
 	if (status == true) {
+        printf("We are listening");
+
 	_radioCom.startListening();
 	} else {
+          printf("We are doing a fucking power down");
+
 	_radioCom.powerDown();
 	}
 return status;
@@ -75,8 +80,15 @@ bool COM_24g::sendFrame(RF24 _radioCom)
 	_payload.type    = _dataType;
 	_payload.version = _dataVersion;
 	_payload.data    = _data;
-
-	bool status = _radioCom.write(&_payload, sizeof(_payload));
+        bool Writestatus = false;
+	 //Writestatus = _radioCom.write(&_payload, sizeof(_payload));
+unsigned long time = millis();
+    printf("Now sending %lu...",time);
+    Writestatus = _radioCom.write( &time, sizeof(unsigned long) );
+  if (Writestatus)
+      printf("ok...");
+    else
+      printf("failed.\n\r");
 
 	//back in read mode
 	_radioCom.startListening(); 
@@ -115,11 +127,10 @@ void COM_24g::listeningPipe(RF24 _radioCom)	//Listen all available pipes
 	}
   _radioCom.startListening();
   _radioCom.powerUp();
-  printf("//NRF24 Module Sensor Enabled.\n");
 
 }
 
-void COM_24g::receiveFrame(RF24 _radioCom)	// Decode the available frame on the pipe
+bool COM_24g::receiveFrame(RF24 _radioCom)	// Decode the available frame on the pipe
 {
 
 int   len 	= _radioCom.getDynamicPayloadSize();  	// Size of the payload to read
@@ -134,7 +145,7 @@ _dataVersion     = _payload.version;
     _data.CMD_WHO.partnum   = _payload.data.CMD_WHO.partnum;
     _data.CMD_WHO.revision  = _payload.data.CMD_WHO.revision;
     _data.CMD_WHO.parttype  = _payload.data.CMD_WHO.parttype;
-    
+    return true;
     break;
     
     default:
@@ -145,6 +156,7 @@ _dataVersion     = _payload.version;
 
 } else {
  //serial.println("Error of read on the Paypload"); 
+ return false;
 }
 
 
