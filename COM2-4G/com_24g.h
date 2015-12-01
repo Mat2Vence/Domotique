@@ -28,6 +28,16 @@
 
 // PayloadType: Enumeration of Payload Type to be managed
 enum PayloadType {
+  
+  WHOAMI,                     // Command to request its identifier
+  YOUARE,                     // Response to WHOAMI that give the information back
+  IAMREADY,                   // A unit to tell the base it is ready
+  CMD_HVAC,        // HVAC command
+  CMD_SLEEP,      // Turn the module in deep sleep mode
+  CMD_ASK,        // ASK if aything is required
+ 
+ 
+ /* 
   SENSOR_HT,			// Temperature and humidity
   SENSOR_DUST,			// CO2 and Co
   SENSOR_PRESSURE,		// Pressure
@@ -38,11 +48,14 @@ enum PayloadType {
   SENSOR_OPEN,			// Door/windows opening detection
   CMD_WHAT,				// Supported Payload type
   CMD_WHO,				// 
+  RESP_WHO,				// 
   CMD_HVAC,				// HVAC command
-  CMD_PILOT,			// Radiator command through pilot wire
-  CMD_IR,				// Multimedia IR command
-  CMD_433,				// 433MHz command
-  CMD_LED,				// LED color command
+  CMD_SLEEP,			// Turn the module in deep sleep mode
+  CMD_ASK,				// Turn the module in deep sleep mode
+  						// IR multimedia
+						// IR radiator
+*/
+
 }
 PACK;
 
@@ -52,9 +65,38 @@ typedef uint16_t vn_payload_CRC;    // 16bits CRC for the payload, Not Used as N
 
 
 // Definition of the data structure for the different Payload to be used.
+//WHOAMI
+typedef struct {
+  uint16_t   partnum;			// part number
+  uint16_t   parttype;			// type of part
+  uint16_t   revision;			// Revision number
+  uint64_t   unitAdress;
+}
+PACK whoami_t;
+
+//YOUARE
+typedef struct {
+  uint16_t   partid;			// part ID for the module
+  uint64_t   baseCmdAdd;
+  uint16_t   base_encode;	        // For encoding communication with the base
+}
+PACK youare_t;
+
+
+//IAMREADY
+typedef struct {
+  uint16_t   partid;			// part ID for the module
+  uint16_t   base_encode;	        // For encoding communication with the base
+  uint16_t   unit_encode;	        // For encoding communication with the base
+}
+PACK iamready_t;
+
+
 
 //SENSOR_HT
 typedef struct {
+  uint16_t   code_base;				// code to get identified when a command is back
+  uint16_t   partnum;				// part num of the device
   float   humidity;       // Percentage of humidity
   float	  temperature;	// Temperature in degree centigrade	
   uint8_t   status;
@@ -102,6 +144,8 @@ PACK sensor_uv_t;
 
 // SENSOR_DETECT
 typedef struct {
+  uint16_t   code_base;				// code to get identified when a command is back
+  uint16_t   partnum;				// part num of the device
   uint8_t   detect;				// Movement Detection
   uint8_t    status;
 }
@@ -118,6 +162,8 @@ PACK sensor_open_t;
 
 // CMD_WHAT
 typedef struct {
+  uint16_t   code_base;			// code to get identified when a command is back
+  uint16_t   code_sat;			// code to get identified when a command is back
   uint16_t   sensor;			// sensor supported
   uint16_t   command;			// command supported
   uint8_t    status;
@@ -126,17 +172,27 @@ PACK cmd_what_t;
 
 // CMD_WHO
 typedef struct {
+  uint16_t   code_base;				// code to get identified when a command is back
+  uint16_t   code_sat;				// code to get identified when a command is back
+  uint8_t    status;
+}
+PACK cmd_who_t;
+
+// RESP_WHO
+typedef struct {
+  uint16_t   code;				// code to get identified when a command is back
   uint16_t   partnum;			// part number
   uint16_t   parttype;			// type of part
   uint16_t   revision;			// Revision number
   uint8_t    status;
 }
-PACK cmd_who_t;
+PACK cmd_rwho_t;
 
 // CMD_HVAC
 typedef struct {
+  uint16_t   code;				// code to get identified when a command is back
   uint8_t   temperature;		// Temperature in degree centigrade
-  uint8_t	fan;					// fan setup
+  uint8_t	fan;				// fan setup
   uint8_t	swing;				// swing setup
   uint8_t	mode;				// mode
   bool		power_switch;		// Switch power or not
@@ -144,6 +200,26 @@ typedef struct {
   uint8_t    status;
 }
 PACK cmd_hvac_t;
+
+// CMD_SLEEP
+typedef struct {
+  uint16_t   code_base;				// code to get identified when a command is back
+  uint16_t   code_sat;				// code to get identified when a command is back
+  uint16_t   partnum;			// part number
+  uint8_t    status;
+}
+PACK cmd_sleep_t;
+
+
+// CMD_ASK
+typedef struct {
+  uint16_t   partnum;			// part number
+  uint16_t   code;				// code to get identified when a command is back
+  uint16_t   address;			// Adress to be used for the data exchange
+  uint8_t    status;
+}
+PACK cmd_ask_t;
+
 
 /* Not implemented Yet 
   CMD_PILOT,			// Radiator command through pilot wire
@@ -153,7 +229,10 @@ PACK cmd_hvac_t;
 */
 
  union COM_24g_data{
-	sensor_ht_t			SENSOR_HT;
+	whoami_t			WHOAMI;
+	youare_t			YOUARE;
+	iamready_t			IAMREADY;
+/*	sensor_ht_t			SENSOR_HT;
 	sensor_dust_t		SENSOR_DUST;
 	sensor_pressure_t	SENSOR_PRESSURE;
 	sensor_light_t		SENSOR_LIGHT;
@@ -163,7 +242,7 @@ PACK cmd_hvac_t;
 	sensor_open_t		SENSOR_OPEN;
 	cmd_what_t			CMD_WHAT;
 	cmd_who_t			CMD_WHO;
-	cmd_hvac_t			CMD_HVAC;
+	cmd_hvac_t			CMD_HVAC;*/
   } PACK;
 
 
@@ -211,6 +290,8 @@ class COM_24g
   PayloadType 		_dataType;
   vn_payload_version	_dataVersion;
   union COM_24g_data 	_data;
+  int  	        _unitID;
+
 
    		COM_24g(RF24 radioCom);    	                        // Object creation
   bool 		initiate(RF24 _radioCom);				// Setup the communication

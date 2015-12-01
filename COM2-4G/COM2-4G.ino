@@ -1,4 +1,4 @@
-#include <Printf.h>
+//#include <Printf.h>
 
 /*
  * com_24g.h
@@ -62,28 +62,71 @@ myCom._ce	=49;		// uno d9  (pin 15) or mega d49 or nano 9
  myCom.initiate(_myRF24);
    Serial.println("Start COM");
     myCom.statusReportOnPC(_myRF24);
- 
+
+
+// Init of the Sat
+// STEP 1 : WHOAMI    
+    myCom._dataType    = WHOAMI;
+    myCom._dataVersion  = 1;
+    myCom._data.WHOAMI.partnum=0x001A;
+    myCom._data.WHOAMI.parttype=0x0A0B;
+    myCom._data.WHOAMI.revision=0x0001;
+    
+    Serial.println("Send WHOAMI");
+    myCom.sendFrame(_myRF24);
+    Serial.println("Done");
+
+// STEP 2 : Listen for the Base answer
+    Serial.println("Wait for the answer");
+    myCom.listeningPipe(_myRF24);
+    while (_myRF24.available(&pipeNo)) {
+         Serial.println("There is a frame available");
+         bool done = false;
+         int len;
+         while (!done) {
+               done=myCom.receiveFrame(_myRF24);
+               Serial.println("data read");
+               Serial.println(myCom._data.YOUARE.partid);    
+               //Serial.println(myCom._data.YOUARE.baseCmdAdd);    
+               //Serial.println(myCom._data.YOUARE.base_encode);    
+
+         }
+    }
+
+// STEP 3 : Write required Info in EEEPROM and Send READY
+
+
 }
 
 
 void loop(void)
 {
+
+// STEP 1 : WAKE-UP
+
+
+// STEP 2 : Ask if there is something to do with CMD_ASK
+
+
+// STEP 3 : Wait for Answer
+
+
+    // STEP 3A : nothing to do --> go to sleep
+
+
+    // STEP 3B : send something to HVAC
+        // step 3B1 : send IR code
+
+        //step 3B2 : send back the command received
+
+        //step 3B3 : wait for sleep command from base
+        
+    
  
   //myCom.receiveFrame(_myRF24);
 
  
 
-     //try for an emission of data
-     //Prepare a Payload to be sent
-    myCom._dataType    = CMD_WHO;
-    myCom._dataVersion  = 1;
-    myCom._data.CMD_WHO.partnum=0x001A;
-    myCom._data.CMD_WHO.parttype=0x0A0B;
-    myCom._data.CMD_WHO.revision=0x0001;
-    
-    Serial.println("Send data");
-    myCom.sendFrame(_myRF24);
-    Serial.println("Done");
     delay(2500);
 
      

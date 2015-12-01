@@ -16,7 +16,7 @@
  */
 
  
-#include <arduin.h> 
+#include <arduino.h> 
 #include <SPI.h>
 #include "RF24.h"
 #include "com_24g.h"
@@ -45,19 +45,21 @@ bool COM_24g::initiate(RF24 _radioCom)
 	//_radioCom.setPayloadSize(8);
 
 	// Open pipes to other nodes for communication
-	_radioCom.openWritingPipe(_writingPipe);
+	//seen if this is an issue _radioCom.openWritingPipe(_writingPipe);
 	for (i=1;i<5;i++) {
 		if (_readingPipe[i] != NULL) {
 		_radioCom.openReadingPipe(i,_readingPipe[i]);
-        printf("Now listening pipe");
+        printf("Now listening pipe %d at adress %x \n",i,_readingPipe[i]);
 
 		status = true;
 		}
 	}
 	if (status == true) {
-        printf("We are listening");
+        printf("INITIALIZATION : We are listening \n");
 
 	_radioCom.startListening();
+        _radioCom.powerUp();
+
 	} else {
           printf("We are doing a fucking power down");
 
@@ -75,20 +77,18 @@ bool COM_24g::sendFrame(RF24 _radioCom)
  
 	//Opening the writting Pipe
 	_radioCom.openWritingPipe(_writingPipe);
-	
+	delay(20);
+
 	//put in place the Paypload
 	_payload.type    = _dataType;
 	_payload.version = _dataVersion;
 	_payload.data    = _data;
-        bool Writestatus = false;
-	 //Writestatus = _radioCom.write(&_payload, sizeof(_payload));
-unsigned long time = millis();
-    printf("Now sending %lu...",time);
-    Writestatus = _radioCom.write( &time, sizeof(unsigned long) );
+	bool Writestatus = _radioCom.write(&_payload, sizeof(_payload));
+
   if (Writestatus)
-      printf("ok...");
+      printf("Communication has been sent successfully. \n");
     else
-      printf("failed.\n\r");
+      printf("Communication has failed.\n\r");
 
 	//back in read mode
 	_radioCom.startListening(); 
@@ -141,12 +141,21 @@ if(done){
 _dataVersion     = _payload.version;
 
   switch (_payload.type ) {
-    case CMD_WHO:
+    /*case CMD_WHO:
     _data.CMD_WHO.partnum   = _payload.data.CMD_WHO.partnum;
     _data.CMD_WHO.revision  = _payload.data.CMD_WHO.revision;
     _data.CMD_WHO.parttype  = _payload.data.CMD_WHO.parttype;
     return true;
     break;
+    */
+    case YOUARE:
+    _data.YOUARE.partid        = _payload.data.YOUARE.partid;
+    _data.YOUARE.baseCmdAdd    = _payload.data.YOUARE.baseCmdAdd;
+    _data.YOUARE.base_encode   = _payload.data.YOUARE.base_encode;
+    _dataType                  = YOUARE;
+    return true;
+    break;
+   
     
     default:
         //serial.println("Unknown message.");
